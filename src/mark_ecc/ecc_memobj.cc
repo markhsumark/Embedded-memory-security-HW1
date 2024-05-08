@@ -26,10 +26,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "learning_gem5/part2/simple_memobj.hh"
+#include "mark_ecc/ecc_memobj.hh"
 
 #include "base/trace.hh"
 #include "debug/EccMemobj.hh"
+#include "mem/packet.hh"
 
 namespace gem5
 {
@@ -173,6 +174,17 @@ EccMemobj::handleRequest(PacketPtr pkt)
     }
 
     DPRINTF(EccMemobj, "Got request for addr %#x\n", pkt->getAddr());
+    // todo
+    PacketId id = pkt->id;
+    DPRINTF(EccMemobj, "handleRequest pkt id is %llu\n", id);
+    uint8_t* data = pkt->getPtr<uint8_t>();
+    unsigned size = pkt->getSize();
+    DPRINTF(EccMemobj, "handleRequest pkt data is \n");
+    for(size_t i= 0; i<size; i++ ){
+        DPRINTF(EccMemobj, "%#x\n", data[i]);
+    }
+
+
 
     // This memobj is now blocked waiting for the response to this packet.
     blocked = true;
@@ -194,6 +206,16 @@ EccMemobj::handleResponse(PacketPtr pkt)
     // We need to free the resource before sending the packet in case the CPU
     // tries to send another request immediately (e.g., in the same callchain).
     blocked = false;
+
+    // todo
+    PacketId id = pkt->id;
+    DPRINTF(EccMemobj, "handleResponse pkt id is %llu\n", id);
+    uint8_t* data = pkt->getPtr<uint8_t>();
+    unsigned size = pkt->getSize();
+    DPRINTF(EccMemobj, "handleResponse pkt data is \n");
+    for(size_t i= 0; i<size; i++ ){
+        DPRINTF(EccMemobj, "%#x\n", data[i]);
+    }
 
     // Simply forward to the memory port
     if (pkt->req->isInstFetch()) {
@@ -231,5 +253,6 @@ EccMemobj::sendRangeChange()
     instPort.sendRangeChange();
     dataPort.sendRangeChange();
 }
-
+// todo: 這裡要放入ecc的functions實作
 } // namespace gem5
+

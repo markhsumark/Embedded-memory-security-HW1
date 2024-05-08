@@ -248,6 +248,10 @@ class EccMemobj : public SimObject
      */
     Port &getPort(const std::string &if_name,
                   PortID idx=InvalidPortID) override;
+
+
+
+    // todo: 這裡要放入ecc的functions的宣告
 };
 
 } // namespace gem5
