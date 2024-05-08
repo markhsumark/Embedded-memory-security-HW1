@@ -32,6 +32,8 @@
 #include "mem/port.hh"
 #include "params/EccMemobj.hh"
 #include "sim/sim_object.hh"
+#include <map>
+#include <math.h>
 
 namespace gem5
 {
@@ -45,6 +47,33 @@ namespace gem5
 class EccMemobj : public SimObject
 {
   private:
+    // todo: 實作所有ECC相關功能
+    class EccObj
+    {
+      private:
+        
+        
+        char* dataToBinary(uint8_t* data, unsigned size);
+
+        int calBitsLen(unsigned size);
+        int findMinR(int m);
+
+
+
+      public:
+        std::map<uint64_t, uint8_t> ecc_map;
+        // 計算原始的data並且儲存到map中(使用saveEccBits2Map)
+        void hammingEncode(uint64_t id, uint8_t* data, unsigned size);
+        // 將讀取出來的data插入hamming bits後，檢查正確性並修正，最後把正確的資料存回data中
+        void hammingDecode(uint64_t id, uint8_t* data, unsigned size);
+
+        // todo: 隨機破壞一個data
+        int flip_timer = 10;
+        void doError(uint8_t* data, unsigned size);
+    };
+    // todo: 作為EccMemobj的成員
+    EccObj ecc_obj;
+
 
     /**
      * Port on the CPU-side that receives requests.
@@ -248,10 +277,7 @@ class EccMemobj : public SimObject
      */
     Port &getPort(const std::string &if_name,
                   PortID idx=InvalidPortID) override;
-
-
-
-    // todo: 這裡要放入ecc的functions的宣告
+  
 };
 
 } // namespace gem5
