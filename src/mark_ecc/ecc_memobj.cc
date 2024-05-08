@@ -173,22 +173,25 @@ EccMemobj::handleRequest(PacketPtr pkt)
         return false;
     }
 
-    DPRINTF(EccMemobj, "Got request for addr %#x\n", pkt->getAddr());
+    // DPRINTF(EccMemobj, "Got request for addr %#x\n", pkt->getAddr());
     // todo
     if(pkt->isWrite()){
+        uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
         DPRINTF(EccMemobj, "handleRequest pkt id is %llu\n", id);
+        DPRINTF(EccMemobj, "handleRequest pkt addr is %llu\n", addr);
         uint8_t* data = pkt->getPtr<uint8_t>();
         unsigned size = pkt->getSize();
         DPRINTF(EccMemobj, "handleRequest pkt data is \n");
         for(size_t i= 0; i<size; i++ ){
-            DPRINTF(EccMemobj, "%u\n", data[i]);
+            DPRINTF(EccMemobj, "%u ", data[i]);
         }
-        // hamming encode
-        // ecc_obj.hammingEncode(id, data, size);
-        // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[id]);
-        // 隨便打亂
-        // ecc_obj.doError(data, size);
+        DPRINTF(EccMemobj, "\n");
+        //hamming encode
+        ecc_obj.hammingEncode(addr, data, size);
+        DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
+        //隨便打亂
+        ecc_obj.doError(data, size);
     }
     
     // This memobj is now blocked waiting for the response to this packet.
@@ -204,7 +207,7 @@ bool
 EccMemobj::handleResponse(PacketPtr pkt)
 {
     assert(blocked);
-    DPRINTF(EccMemobj, "Got response for addr %#x\n", pkt->getAddr());
+    // DPRINTF(EccMemobj, "Got response for addr %#x\n", pkt->getAddr());
 
     // The packet is now done. We're about to put it in the port, no need for
     // this object to continue to stall.
@@ -215,19 +218,24 @@ EccMemobj::handleResponse(PacketPtr pkt)
     // todo
     if (pkt->isRead()) 
     {
-        uint64_t id = pkt->id;
         
-        // uint64_t id = pkt->getAddr();
+        uint64_t addr = pkt->getAddr();
+        uint64_t id = pkt->id;
         DPRINTF(EccMemobj, "handleResponse pkt id is %llu\n", id);
-        uint8_t* data = pkt->getPtr<uint8_t>();
-        unsigned size = pkt->getSize();
-        DPRINTF(EccMemobj, "handleResponse pkt data is \n");
-        for(size_t i= 0; i<size; i++ ){
-            DPRINTF(EccMemobj, "%u\n", data[i]);
+        DPRINTF(EccMemobj, "handleResponse pkt addr is %llu\n", addr);
+        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){
+            // uint64_t id = pkt->getAddr();
+            uint8_t* data = pkt->getPtr<uint8_t>();
+            unsigned size = pkt->getSize();
+            DPRINTF(EccMemobj, "handleResponse pkt data is \n");
+            for(size_t i= 0; i<size; i++ ){
+                DPRINTF(EccMemobj, "%u ", data[i]);
+            }
+            DPRINTF(EccMemobj, "\n");
+            DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
+            //hamming decode
+            ecc_obj.hammingDecode(addr, data, size);
         }
-        // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[id]);
-        // hamming decode
-        // ecc_obj.hammingDecode(id, data, size);
     }
 
     // Simply forward to the memory port
@@ -297,23 +305,22 @@ EccMemobj::EccObj::dataToBinary(uint8_t* data, unsigned size){
         }
     }
     binaryString[binLength] = '\0'; // 添加字符串結束符
-
+    for(int i=0; i<strlen(binaryString); i++){
+        printf("%c", binaryString[i]);
+    }
+    printf("\n");
     return binaryString;
 }
 
 void
 EccMemobj::EccObj::hammingEncode(uint64_t id, uint8_t* data, unsigned size){
     int databits_len = calBitsLen(size);
-    int hamming_len = findMinR(databits_len);
     uint8_t parityBits = 0;
 
     int bitPosition = 1;
     int dataIndex = 0;
-    int encodedIndex = 0;
 
     char* binaryOfdata = dataToBinary(data, size);
-    // printf("data before encode: ");
-    // printBinary(binaryOfdata);
     
     while (dataIndex < databits_len) {
         if ((bitPosition & (bitPosition - 1)) != 0) { // 不是2的幂次方，是数据位
@@ -324,11 +331,10 @@ EccMemobj::EccObj::hammingEncode(uint64_t id, uint8_t* data, unsigned size){
         }
         bitPosition++;
     }
-    // printf("p bits is %lld\n", parityBits);
 
     // 存入map中
     ecc_map[id] = parityBits;
-
+    printf("encode parityBits is %u\n", parityBits);
 
     return;
 }
@@ -340,8 +346,6 @@ EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
     int hamming_len = findMinR(databits_len);
 
     char* binaryOfdata = dataToBinary(data, size);
-    // printf("data before decode: ");
-    // printBinary(binaryOfdata);
 
     uint8_t checkBits = 0;
 
@@ -352,7 +356,6 @@ EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
     while (dataIndex < databits_len) {
         if ((bitPosition & (bitPosition - 1)) != 0) { // 不是2的幂次方，是数据位
             if(binaryOfdata[dataIndex] == '1'){
-                // printf("dataIndex is %d\n", bitPosition);
                 checkBits ^= bitPosition;
             }
             dataIndex++;
@@ -361,14 +364,23 @@ EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
     }
     int hammingBitsIndex = 1;
     while(hammingBitsIndex <= hamming_len){
-        // printf("hammingBitsIndex is %d\n", uint8_t(pow(2, hamming_len - hammingBitsIndex)));
         if( (parityBits & uint8_t(pow(2, hamming_len - hammingBitsIndex))) != 0){
             checkBits^= uint8_t(pow(2, hamming_len - hammingBitsIndex));
         }
         hammingBitsIndex++;
     }
-    // printf("checkBits is %d\n", checkBits);
-    printf("check bits is %u\n", checkBits);
+    
+
+    // 修復
+    if(checkBits != 0){
+        printf("error bit occur, checkBits is %d\n", checkBits);
+        double result = sqrt(checkBits) +1;
+        int flip_bit_i = checkBits- (int)result -1;
+        int block_i = flip_bit_i/8;
+        int index = flip_bit_i%8;
+        uint8_t fix_number = uint8_t( pow(2, 8-index-1) );
+        *(data+block_i) ^= fix_number;
+    }
 
     return;
 }
@@ -382,8 +394,8 @@ void
 EccMemobj::EccObj::doError(uint8_t* data, unsigned size){
     flip_timer--;
     if(flip_timer == 0){
-        // DPRINTF(EccMemobj, "flip the first bit\n");
-        data[0] ^= uint8_t(1);
+        printf("LETS MAKE A ERROR BIT!!!!!!(flip the first bit)\n");
+        data[0] ^= 0x01;
     }
     return;
 }
