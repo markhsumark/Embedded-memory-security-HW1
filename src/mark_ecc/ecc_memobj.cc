@@ -227,11 +227,11 @@ EccMemobj::handleResponse(PacketPtr pkt)
             // uint64_t id = pkt->getAddr();
             
             unsigned size = pkt->getSize();
-            DPRINTF(EccMemobj, "handleResponse pkt data is \n");
-            for(size_t i= 0; i<size; i++ ){
-                DPRINTF(EccMemobj, "%u\n", data[i]);
-            }
-            DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
+            // DPRINTF(EccMemobj, "handleResponse pkt data is \n");
+            // for(size_t i= 0; i<size; i++ ){
+            //     DPRINTF(EccMemobj, "%u\n", data[i]);
+            // }
+            // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
             //hamming decode
             ecc_obj.hammingDecode(uint64_t(data), data, size);
         }
@@ -333,7 +333,7 @@ EccMemobj::EccObj::hammingEncode(uint64_t id, uint8_t* data, unsigned size){
 
     // 存入map中
     ecc_map[id] = parityBits;
-    printf("encode parityBits is %u\n", parityBits);
+    printf("encode parityBits saved in map[%llu]:%u\n", id, parityBits);
 
     return;
 }
@@ -363,8 +363,8 @@ EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
     }
     int hammingBitsIndex = 1;
     while(hammingBitsIndex <= hamming_len){
-        if( (parityBits & uint8_t(pow(2, hamming_len - hammingBitsIndex))) != 0){
-            checkBits^= uint8_t(pow(2, hamming_len - hammingBitsIndex));
+        if( (parityBits & uint8_t(1 << (hamming_len - hammingBitsIndex))) != 0){
+            checkBits^= uint8_t(1 << (hamming_len - hammingBitsIndex));
         }
         hammingBitsIndex++;
     }
@@ -373,13 +373,19 @@ EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
     // 修復
     if(checkBits != 0){
         printf("error bit occur, checkBits is %d\n", checkBits);
+        
         double result = sqrt(checkBits) +1;
         int flip_bit_i = checkBits- (int)result -1;
         int block_i = flip_bit_i/8;
         int index = flip_bit_i%8;
-        uint8_t fix_number = uint8_t( pow(2, 8-index-1) );
-        *(data+block_i) ^= fix_number;
+        uint8_t fix_number = uint8_t( 1 << 8-index-1 );
         printf("correct data[%d]'s %d bit\n", block_i, 8-index);
+        printf("before fix: \n");
+        for(size_t i= 0; i<size; i++ )
+            printf("%u ", data[i]);
+        printf("\n");
+        *(data+block_i) ^= fix_number;
+        
         printf("after fix: \n");
         for(size_t i= 0; i<size; i++ )
             printf("%u ", data[i]);
@@ -400,7 +406,14 @@ EccMemobj::EccObj::doError(uint8_t* data, unsigned size){
 
     int errorProbability = rand() % 100; // 生成0到99之间的随机整数
 
-    if(errorProbability == 0){
+    // if(errorProbability == 0){
+    //     int errorBlock = rand() % size;
+    //     int errorBit = rand() % 8;
+    //     printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);
+    //     data[errorBlock] ^= (1 << errorBit);
+    // }
+    if(flip_timer == 0){
+        flip_timer = 10;
         int errorBlock = rand() % size;
         int errorBit = rand() % 8;
         printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);

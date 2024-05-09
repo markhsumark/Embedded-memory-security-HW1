@@ -69,7 +69,7 @@ class EccMemobj : public SimObject
         void hammingDecode(uint64_t id, uint8_t* data, unsigned size);
 
         // todo: 隨機破壞一個data
-        int flip_timer = 1;
+        int flip_timer = 10;
         void doError(uint8_t* data, unsigned size);
     };
     // todo: 作為EccMemobj的成員
