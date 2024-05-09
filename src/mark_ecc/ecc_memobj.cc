@@ -187,7 +187,7 @@ EccMemobj::handleRequest(PacketPtr pkt)
         //     DPRINTF(EccMemobj, "%u\n", data[i]);
         // }
         //hamming encode
-        ecc_obj.hammingEncode(addr, data, size);
+        ecc_obj.hammingEncode(uint64_t(data), data, size);
         // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
         //隨便打亂
         ecc_obj.doError(data, size);
@@ -220,12 +220,12 @@ EccMemobj::handleResponse(PacketPtr pkt)
         
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
-        
-        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){
+        uint8_t* data = pkt->getPtr<uint8_t>();
+        if(ecc_obj.ecc_map.find(uint64_t(data)) != ecc_obj.ecc_map.end()){
             DPRINTF(EccMemobj, "handleResponse pkt id is %llu\n", id);
             DPRINTF(EccMemobj, "handleResponse pkt addr is %llu\n", addr);
             // uint64_t id = pkt->getAddr();
-            uint8_t* data = pkt->getPtr<uint8_t>();
+            
             unsigned size = pkt->getSize();
             DPRINTF(EccMemobj, "handleResponse pkt data is \n");
             for(size_t i= 0; i<size; i++ ){
@@ -233,7 +233,7 @@ EccMemobj::handleResponse(PacketPtr pkt)
             }
             DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
             //hamming decode
-            ecc_obj.hammingDecode(addr, data, size);
+            ecc_obj.hammingDecode(uint64_t(data), data, size);
         }
     }
 
