@@ -213,10 +213,9 @@ EccMemobj::handleResponse(PacketPtr pkt)
     // tries to send another request immediately (e.g., in the same callchain).
     blocked = false;
 
-    // todo
+    // 檢查packet是isRead(memory read operation)
     if (pkt->isRead()) 
     {
-        
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
         uint8_t* data = pkt->getPtr<uint8_t>();
@@ -328,7 +327,6 @@ EccMemobj::EccObj::hammingEncode(uint64_t id, uint8_t* data, unsigned size){
 
     // 存入map中
     ecc_map[id] = parityBits;
-    printf("encode parityBits saved in map[%llu]:%u\n", id, parityBits);
 
     return;
 }

@@ -51,23 +51,25 @@ class EccMemobj : public SimObject
     class EccObj
     {
       private:
-        
-        
+        // 根據packet's size and data(pointer)，轉成char array，以字串的方式記錄每個bit(ex: '0','1','1','0',...)
         char* dataToBinary(uint8_t* data, unsigned size);
 
+        // return size * sizeof(uint8_t) * 8;
         int calBitsLen(unsigned size);
+        
+        // 根據packet's size算出parity bits所需要的bits length
         int findMinR(int m);
-
-
-
       public:
+        //用於紀錄key -> parity bits
         std::map<uint64_t, uint8_t> ecc_map;
-        // 計算原始的data並且儲存到map中(使用saveEccBits2Map)
+        
+        // 計算原始的data的parity bits並且根據id儲存到map中
         void hammingEncode(uint64_t id, uint8_t* data, unsigned size);
-        // 將讀取出來的data插入hamming bits後，檢查正確性並修正，最後把正確的資料存回data中
+        
+        // 使用id去map中找對應的parity bits，檢查正確性並修正，最後把正確的資料存回data中
         void hammingDecode(uint64_t id, uint8_t* data, unsigned size);
 
-        // todo: 隨機破壞一個data
+        // 隨機破壞一個data
         int flip_timer = 10;
         void doError(uint8_t* data, unsigned size);
     };
