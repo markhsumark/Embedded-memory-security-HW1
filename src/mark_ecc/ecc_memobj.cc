@@ -179,18 +179,16 @@ EccMemobj::handleRequest(PacketPtr pkt)
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
         uint8_t* data = pkt->getPtr<uint8_t>();
-        DPRINTF(EccMemobj, "handleRequest pkt id is %llu\n", id);
-        DPRINTF(EccMemobj, "handleRequest pkt addr is %llu\n", addr);
-        DPRINTF(EccMemobj, "handleResponse pkt data's addr is %llu\n", uint64_t(data));
         
         unsigned size = pkt->getSize();
-        // DPRINTF(EccMemobj, "handleRequest pkt data is \n");
-        // for(size_t i= 0; i<size; i++ ){
-        //     DPRINTF(EccMemobj, "%u\n", data[i]);
-        // }
+        DPRINTF(EccMemobj, "handleRequest pkt data is \n");
+        for(size_t i= 0; i<size; i++ ){
+            DPRINTF(EccMemobj, "%u ", data[i]);
+        }
+        DPRINTF(EccMemobj, "\n");
         //hamming encode
         ecc_obj.hammingEncode(addr, data, size);
-        // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
+        DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
         //隨便打亂
         ecc_obj.doError(data, size);
     }
@@ -223,18 +221,14 @@ EccMemobj::handleResponse(PacketPtr pkt)
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
         uint8_t* data = pkt->getPtr<uint8_t>();
-        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){
-            DPRINTF(EccMemobj, "handleResponse pkt id is %llu\n", id);
-            DPRINTF(EccMemobj, "handleResponse pkt addr is %llu\n", addr);
-            DPRINTF(EccMemobj, "handleResponse pkt data's addr is %llu\n", uint64_t(data));
-            // uint64_t id = pkt->getAddr();
-            
+        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){            
             unsigned size = pkt->getSize();
-            // DPRINTF(EccMemobj, "handleResponse pkt data is \n");
-            // for(size_t i= 0; i<size; i++ ){
-            //     DPRINTF(EccMemobj, "%u\n", data[i]);
-            // }
-            // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
+            DPRINTF(EccMemobj, "handleResponse pkt data is \n");
+            for(size_t i= 0; i<size; i++ ){
+                DPRINTF(EccMemobj, "%u ", data[i]);
+            }
+            DPRINTF(EccMemobj, "\n");
+            DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
             //hamming decode
             ecc_obj.hammingDecode(addr, data, size);
         }
@@ -405,23 +399,11 @@ EccMemobj::EccObj::calBitsLen(unsigned size){
 
 void 
 EccMemobj::EccObj::doError(uint8_t* data, unsigned size){
-    srand(time(NULL));
-
-    int errorProbability = rand() % 100; // 生成0到99之间的随机整数
-
-    // if(errorProbability == 0){
-    //     int errorBlock = rand() % size;
-    //     int errorBit = rand() % 8;
-    //     printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);
-    //     data[errorBlock] ^= (1 << errorBit);
-    // }
     flip_timer--;
     if(flip_timer == 0){
-        flip_timer = 100;
-        int errorBlock = rand() % size;
-        int errorBit = rand() % 8;
-        printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);
-        data[errorBlock] ^= (1 << errorBit);
+        flip_timer = 30;
+        printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[0] first bit)\n");
+        data[0] ^= 0x01;
     }
     return;
 }
