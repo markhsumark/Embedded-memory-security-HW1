@@ -304,10 +304,10 @@ EccMemobj::EccObj::dataToBinary(uint8_t* data, unsigned size){
         }
     }
     binaryString[binLength] = '\0'; // 添加字符串結束符
-    for(int i=0; i<strlen(binaryString); i++){
-        printf("%c", binaryString[i]);
-    }
-    printf("\n");
+    // for(int i=0; i<strlen(binaryString); i++){
+    //     printf("%c", binaryString[i]);
+    // }
+    // printf("\n");
     return binaryString;
 }
 
