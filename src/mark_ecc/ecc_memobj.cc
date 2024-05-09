@@ -183,9 +183,8 @@ EccMemobj::handleRequest(PacketPtr pkt)
         unsigned size = pkt->getSize();
         DPRINTF(EccMemobj, "handleRequest pkt data is \n");
         for(size_t i= 0; i<size; i++ ){
-            DPRINTF(EccMemobj, "%u ", data[i]);
+            DPRINTF(EccMemobj, "%u\n", data[i]);
         }
-        DPRINTF(EccMemobj, "\n");
         //hamming encode
         ecc_obj.hammingEncode(addr, data, size);
         DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
@@ -225,9 +224,8 @@ EccMemobj::handleResponse(PacketPtr pkt)
             unsigned size = pkt->getSize();
             DPRINTF(EccMemobj, "handleResponse pkt data is \n");
             for(size_t i= 0; i<size; i++ ){
-                DPRINTF(EccMemobj, "%u ", data[i]);
+                DPRINTF(EccMemobj, "%u\n", data[i]);
             }
-            DPRINTF(EccMemobj, "\n");
             DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
             //hamming decode
             ecc_obj.hammingDecode(addr, data, size);
