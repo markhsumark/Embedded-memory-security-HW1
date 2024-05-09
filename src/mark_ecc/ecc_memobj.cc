@@ -173,7 +173,7 @@ EccMemobj::handleRequest(PacketPtr pkt)
         return false;
     }
 
-    // DPRINTF(EccMemobj, "Got request for addr %#x\n", pkt->getAddr());
+    DPRINTF(EccMemobj, "Got request for addr %#x\n", pkt->getAddr());
     // todo
     if(pkt->isWrite()){
         uint64_t addr = pkt->getAddr();
@@ -205,7 +205,7 @@ bool
 EccMemobj::handleResponse(PacketPtr pkt)
 {
     assert(blocked);
-    // DPRINTF(EccMemobj, "Got response for addr %#x\n", pkt->getAddr());
+    DPRINTF(EccMemobj, "Got response for addr %#x\n", pkt->getAddr());
 
     // The packet is now done. We're about to put it in the port, no need for
     // this object to continue to stall.
@@ -298,10 +298,7 @@ EccMemobj::EccObj::dataToBinary(uint8_t* data, unsigned size){
         }
     }
     binaryString[binLength] = '\0'; // 添加字符串結束符
-    // for(int i=0; i<strlen(binaryString); i++){
-    //     printf("%c", binaryString[i]);
-    // }
-    // printf("\n");
+
     return binaryString;
 }
 
