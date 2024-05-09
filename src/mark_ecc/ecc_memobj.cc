@@ -178,16 +178,18 @@ EccMemobj::handleRequest(PacketPtr pkt)
     if(pkt->isWrite()){
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
+        uint8_t* data = pkt->getPtr<uint8_t>();
         DPRINTF(EccMemobj, "handleRequest pkt id is %llu\n", id);
         DPRINTF(EccMemobj, "handleRequest pkt addr is %llu\n", addr);
-        uint8_t* data = pkt->getPtr<uint8_t>();
+        DPRINTF(EccMemobj, "handleResponse pkt data's addr is %llu\n", uint64_t(data));
+        
         unsigned size = pkt->getSize();
         // DPRINTF(EccMemobj, "handleRequest pkt data is \n");
         // for(size_t i= 0; i<size; i++ ){
         //     DPRINTF(EccMemobj, "%u\n", data[i]);
         // }
         //hamming encode
-        ecc_obj.hammingEncode(uint64_t(data), data, size);
+        ecc_obj.hammingEncode(addr, data, size);
         // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
         //隨便打亂
         ecc_obj.doError(data, size);
@@ -221,9 +223,10 @@ EccMemobj::handleResponse(PacketPtr pkt)
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
         uint8_t* data = pkt->getPtr<uint8_t>();
-        if(ecc_obj.ecc_map.find(uint64_t(data)) != ecc_obj.ecc_map.end()){
+        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){
             DPRINTF(EccMemobj, "handleResponse pkt id is %llu\n", id);
             DPRINTF(EccMemobj, "handleResponse pkt addr is %llu\n", addr);
+            DPRINTF(EccMemobj, "handleResponse pkt data's addr is %llu\n", uint64_t(data));
             // uint64_t id = pkt->getAddr();
             
             unsigned size = pkt->getSize();
@@ -233,7 +236,7 @@ EccMemobj::handleResponse(PacketPtr pkt)
             // }
             // DPRINTF(EccMemobj, "parity bits of data is %u\n", ecc_obj.ecc_map[addr]);
             //hamming decode
-            ecc_obj.hammingDecode(uint64_t(data), data, size);
+            ecc_obj.hammingDecode(addr, data, size);
         }
     }
 
@@ -412,8 +415,9 @@ EccMemobj::EccObj::doError(uint8_t* data, unsigned size){
     //     printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);
     //     data[errorBlock] ^= (1 << errorBit);
     // }
+    flip_timer--;
     if(flip_timer == 0){
-        flip_timer = 10;
+        flip_timer = 100;
         int errorBlock = rand() % size;
         int errorBit = rand() % 8;
         printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", errorBlock, errorBit);
