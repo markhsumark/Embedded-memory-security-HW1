@@ -12,7 +12,7 @@
   ```
 5. run gem5
   ```bash
-  build/X86/gem5.opt configs/mark_ecc/ecc_simobj.py
+  build/X86/gem5.opt --debug-flags EccMemobj configs/mark_ecc/ecc_simobj.py
   ```
 6. result
 
