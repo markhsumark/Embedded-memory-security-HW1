@@ -1,3 +1,24 @@
+# How to test my ecc simulator
+
+1. use or new a ubuntu 22.04 os
+2. clone this repo.
+  ```bash
+  git clone git@github.com:markhsumark/Embedded-memory-security-HW1.git
+  ```
+3. build this project
+  ```bash
+  cd gem5
+  scons build/X86/gem5.opt -j 4
+  ```
+5. run gem5
+   ```bash
+   build/X86/gem5.opt configs/mark_ecc/ecc_simobj.py
+   ```
+6. result
+
+
+Thank you.
+
 # The gem5 Simulator
 
 This is the repository for the gem5 simulator. It contains the full source code
