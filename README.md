@@ -11,9 +11,9 @@
   scons build/X86/gem5.opt -j 4
   ```
 5. run gem5
-   ```bash
-   build/X86/gem5.opt configs/mark_ecc/ecc_simobj.py
-   ```
+  ```bash
+  build/X86/gem5.opt configs/mark_ecc/ecc_simobj.py
+  ```
 6. result
 
 
