@@ -16,6 +16,8 @@
   ```
 6. result
 
+You could see my ECC code, which is placed in `./ecc.cc` if you want to test my ECC code independently.
+(Modify the main function in ecc.cc to customize your input)
 
 Thank you.
 
