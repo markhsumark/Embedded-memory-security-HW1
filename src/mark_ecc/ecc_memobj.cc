@@ -186,8 +186,9 @@ EccMemobj::handleRequest(PacketPtr pkt)
             DPRINTF(EccMemobj, "%u\n", data[i]);
         }
         //hamming encode
-        ecc_obj.hammingEncode(addr, data, size);
-        DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
+        for(unsigned s = 0; s<size; s++){
+            ecc_obj.hammingEncode(addr+s, data+s, 1);
+        }
         //隨便打亂
         ecc_obj.doError(data, size);
     }
@@ -218,17 +219,18 @@ EccMemobj::handleResponse(PacketPtr pkt)
     {
         uint64_t addr = pkt->getAddr();
         uint64_t id = pkt->id;
-        uint8_t* data = pkt->getPtr<uint8_t>();
-        if(ecc_obj.ecc_map.find(addr) != ecc_obj.ecc_map.end()){            
-            unsigned size = pkt->getSize();
-            DPRINTF(EccMemobj, "handleResponse pkt data is \n");
-            for(size_t i= 0; i<size; i++ ){
-                DPRINTF(EccMemobj, "%u\n", data[i]);
-            }
-            DPRINTF(EccMemobj, "parity bits of data in address %llu is %u\n", addr, ecc_obj.ecc_map[addr]);
-            //hamming decode
-            ecc_obj.hammingDecode(addr, data, size);
+        uint8_t* data = pkt->getPtr<uint8_t>();           
+        unsigned size = pkt->getSize();
+        DPRINTF(EccMemobj, "handleResponse pkt data is \n");
+        for(size_t i= 0; i<size; i++ ){
+            DPRINTF(EccMemobj, "%u\n", data[i]);
         }
+        //hamming decode
+        for(unsigned s = 0; s<size; s++){
+            if(ecc_obj.ecc_map.find(addr+s) != ecc_obj.ecc_map.end())
+                ecc_obj.hammingDecode(addr+s, data+s, 1);
+        }
+            
     }
 
     // Simply forward to the memory port
@@ -324,12 +326,14 @@ EccMemobj::EccObj::hammingEncode(uint64_t id, uint8_t* data, unsigned size){
 
     // 存入map中
     ecc_map[id] = parityBits;
+    printf("Encode --- parity bits in %#x is : %u\n", id, parityBits);
 
     return;
 }
 
 void
 EccMemobj::EccObj::hammingDecode(uint64_t id, uint8_t* data, unsigned size){
+    printf("Decode --- parity bits in %#x is : %u\n", id, ecc_map[id]);
     uint8_t parityBits = ecc_map[id];
     int databits_len = calBitsLen(size);
     int hamming_len = findMinR(databits_len);
@@ -392,12 +396,12 @@ EccMemobj::EccObj::calBitsLen(unsigned size){
 
 void 
 EccMemobj::EccObj::doError(uint8_t* data, unsigned size){
-    flip_timer--;
-    if(flip_timer == 0){
-        flip_timer = 30;
-        printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[0] first bit)\n");
-        data[0] ^= 0x01;
-    }
+    flip_timer++;
+    int random_byte = flip_timer%size;
+    int random_bit = flip_timer%8;
+    printf("LETS MAKE A ERROR BIT!!!!!!(flip the data[%d]'s %d bit)\n", random_byte, random_bit);
+    data[random_byte] ^= (1 << random_bit);
+
     return;
 }
 

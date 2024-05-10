@@ -34,6 +34,8 @@
 #include "sim/sim_object.hh"
 #include <map>
 #include <math.h>
+#include <cstdlib>
+#include <ctime>
 
 namespace gem5
 {
